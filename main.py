@@ -1,88 +1,46 @@
 from fastapi import FastAPI
-from enum import Enum
-from typing import Optional
+from pydantic import BaseModel
+import requests
+
 app = FastAPI()
+fake_db = []
 
-class ModelName(str,Enum):
-    alexnet = "alexnet"
-    resnet  = "resnet"
-    lenet   = "lenet"
-
+class City(BaseModel):
+    name :str
+    timezone : str
 
 @app.get("/")
-async def root():
-    return {"message": "Hello World"}
+def index():
+    return {"hello":"world"}
 
-@app.get("/async")
-async def root():
-    return {"message": "Hello World"}
+@app.get("/cities")
+def get_cities():
+    results = []
+    for city in fake_db:
+        strs = f"http://worldtimeapi.org/api/timezone/{city['timezone']}"
+        r = requests.get(strs)
+        cur_time = r.json()["datetime"]
+        results.append({"name":city["name"], "timezone":city["timezone"], "current_time":cur_time})
 
+    return results
 
-# @app.get("/items/{item_id}")
-# async def read_item(item_id: int):
-#     return {"item_id": item_id}
+@app.get("/cities/{city_id}")
+def get_city(city_id : int):
+    city = fake_db[city_id-1]
+    strs = f"http://worldtimeapi.org/api/timezone/{city['timezone']}"
+    r = requests.get(strs)
 
-@app.get("/models/{model_name}")
-async def get_model(model_name: ModelName):
-    if model_name == ModelName.alexnet:
-        return {"model_name": model_name, "message": "Deep Learning FTW!"}
+    cur_time = r.json()["datetime"]
 
-    if model_name.value == "lenet":
-        return {"model_name": model_name, "message": "LeCNN all the images"}
+    return {"name":city["name"], "timezone":city["timezone"], "current_time":cur_time}
 
-    return {"model_name": model_name, "message": "Have some residuals"}
+@app.post("/cities")
+def create_city(city : City) :
+    fake_db.append(city.dict())
+    print(fake_db)
+    return fake_db[-1]
 
-
-@app.get("/files/{file_path:path}")
-async def read_file(file_path: str):
-    return {"file_path": file_path}
-
-fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
-
-# @app.get("/items/")
-# async def read_item(skip: int = 0, limit: int = 10):
-#     return fake_items_db[skip : skip + limit]
-
-# @app.get("/items/{item_id}")
-# async def read_item(item_id: str, q: Optional[str] = None):
-#     if q:
-#         return {"item_id": item_id, "q": q}
-#     return {"item_id": item_id}
-
-# @app.get("/items/{item_id}")
-# async def read_item(item_id: str, q: Optional[str] = None, short: bool = False):
-#     item = {"item_id": item_id}
-#     if q:
-#         item.update({"q": q})
-#     if not short:
-#         item.update(
-#             {"description": "This is an amazing item that has a long description"}
-#         )
-#     return item
-
-@app.get("/users/{user_id}/items/{item_id}")
-async def read_user_item(
-    user_id: int, item_id: str, q: Optional[str] = None, short: bool = False
-):
-    item = {"item_id": item_id, "owner_id": user_id}
-    if q:
-        item.update({"q": q})
-    if not short:
-        item.update(
-            {"description": "This is an amazing item that has a long description"}
-        )
-    return item
-
-
-# @app.get("/items/{item_id}")
-# async def read_user_item(item_id: str, needy: str):
-#     item = {"item_id": item_id, "needy": needy}
-#     return item
-
-# 필수 파라미터가 여러개일 때  /parameter?paremeter=2&~~~
-@app.get("/items/{item_id}")
-async def read_user_item(
-    item_id: str,  needy: str, skip: str="asd", limit: Optional[int] = None
-):
-    item = {"item_id": item_id, "needy": needy, "skip": skip, "limit": limit}
-    return item
+@app.delete("/cities/{city_id}")
+def delete_city(city_id : int):
+    fake_db.pop(city_id-1)
+    return {}
