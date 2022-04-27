@@ -36,3 +36,6 @@ uvicorn app.main:app --reload
 
 - reference
   - <https://fastapi.tiangolo.com/tutorial/sql-databases/#alternative-db-session-with-middleware>
+
+- create template and test function
+  - <https://levelup.gitconnected.com/building-a-website-starter-with-fastapi-92d077092864#69f2>
