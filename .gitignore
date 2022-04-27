@@ -24,3 +24,4 @@ docker.txt
 app/database/secrets.json
 migrations
 app/database/database.py
+__init__.pyc
